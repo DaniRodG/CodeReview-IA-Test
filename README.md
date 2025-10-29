@@ -12,7 +12,7 @@ Este repositorio contiene una configuración de GitHub Actions para realizar rev
 ## Requisitos Previos
 
 1. **API Key de GLM**: Necesitas una clave API de Zhipu AI (GLM 4.6)
-   - Obtén tu API key en: https://open.bigmodel.cn/
+   - Obtén tu API key en: https://z.ai/
 2. **Permisos en GitHub**: Debes tener permisos de administrador en el repositorio
 
 ## Configuración
@@ -178,7 +178,7 @@ MIT
 
 Para problemas con:
 - **GitHub Actions**: Consulta la [documentación de GitHub](https://docs.github.com/actions)
-- **API de GLM**: Visita la [documentación de Zhipu AI](https://open.bigmodel.cn/dev/api)
+- **API de GLM**: Visita la [documentación de Zhipu AI](https://docs.z.ai/)
 
 ---
 

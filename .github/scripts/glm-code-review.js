@@ -4,7 +4,7 @@ const path = require('path');
 
 // Configuration
 const GLM_API_KEY = process.env.GLM_API_KEY;
-const GLM_API_URL = process.env.GLM_API_URL || 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+const GLM_API_URL = process.env.GLM_API_URL || 'https://api.z.ai/api/paas/v4/chat/completions';
 const BASE_BRANCH = process.env.BASE_BRANCH || 'main';
 const MAX_FILE_SIZE = 100000; // Maximum file size in bytes to include in review
 
@@ -16,7 +16,7 @@ async function callGLMAPI(prompt) {
       'Authorization': `Bearer ${GLM_API_KEY}`,
     },
     body: JSON.stringify({
-      model: 'glm-4-plus',
+      model: 'glm-4.6',
       messages: [
         {
           role: 'user',
@@ -25,6 +25,7 @@ async function callGLMAPI(prompt) {
       ],
       temperature: 0.7,
       max_tokens: 4000,
+      stream: false,
     }),
   });
 
