@@ -21,7 +21,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install dependencies
         run: npm install
@@ -35,20 +35,14 @@ jobs:
           BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
         run: node .github/scripts/glm-code-review.js
 
-      - name: Post review comment
+      - name: Post code review
         if: always()
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const path = require('path');
 
             let reviewComment = '';
-            const filePath = path.join(process.cwd(), 'review-output.md');
-
-            console.log('Looking for file at:', filePath);
-            console.log('Current directory:', process.cwd());
-            console.log('Files in directory:', fs.readdirSync(process.cwd()));
 
             try {
               reviewComment = fs.readFileSync('review-output.md', 'utf8');
@@ -58,16 +52,17 @@ jobs:
               reviewComment = '⚠️ No se pudo completar la revisión de código. Por favor, revisa los logs del workflow.';
             }
 
-            // Post comment on PR
+            // Create a GitHub Review
             try {
-              await github.rest.issues.createComment({
+              await github.rest.pulls.createReview({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.payload.pull_request.number,
-                body: reviewComment
+                pull_number: context.payload.pull_request.number,
+                body: reviewComment,
+                event: 'COMMENT' // Options: 'APPROVE', 'REQUEST_CHANGES', 'COMMENT'
               });
-              console.log('Comment posted successfully');
+              console.log('Review posted successfully');
             } catch (error) {
-              console.error('Error posting comment:', error);
+              console.error('Error posting review:', error);
               throw error;
             }
