@@ -41,18 +41,33 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const path = require('path');
 
             let reviewComment = '';
+            const filePath = path.join(process.cwd(), 'review-output.md');
+
+            console.log('Looking for file at:', filePath);
+            console.log('Current directory:', process.cwd());
+            console.log('Files in directory:', fs.readdirSync(process.cwd()));
+
             try {
               reviewComment = fs.readFileSync('review-output.md', 'utf8');
+              console.log('Review file read successfully');
             } catch (error) {
+              console.error('Error reading file:', error);
               reviewComment = '⚠️ No se pudo completar la revisión de código. Por favor, revisa los logs del workflow.';
             }
 
             // Post comment on PR
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body: reviewComment
-            });
+            try {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: reviewComment
+              });
+              console.log('Comment posted successfully');
+            } catch (error) {
+              console.error('Error posting comment:', error);
+              throw error;
+            }
