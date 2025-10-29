@@ -42,27 +42,56 @@ jobs:
           script: |
             const fs = require('fs');
 
-            let reviewComment = '';
+            let reviewBody = '';
+            let inlineComments = [];
 
+            // Read review markdown
             try {
-              reviewComment = fs.readFileSync('review-output.md', 'utf8');
-              console.log('Review file read successfully');
+              reviewBody = fs.readFileSync('review-output.md', 'utf8');
+              console.log('Review markdown read successfully');
             } catch (error) {
-              console.error('Error reading file:', error);
-              reviewComment = '⚠️ No se pudo completar la revisión de código. Por favor, revisa los logs del workflow.';
+              console.error('Error reading markdown:', error);
+              reviewBody = '⚠️ No se pudo completar la revisión de código. Por favor, revisa los logs del workflow.';
             }
 
-            // Create a GitHub Review
+            // Read inline comments JSON
             try {
-              await github.rest.pulls.createReview({
+              const commentsData = JSON.parse(fs.readFileSync('review-comments.json', 'utf8'));
+              inlineComments = commentsData.comments || [];
+              console.log(`Found ${inlineComments.length} inline comments`);
+            } catch (error) {
+              console.warn('No inline comments found or error reading:', error.message);
+            }
+
+            // Get PR details
+            const pr = context.payload.pull_request;
+            const commitId = pr.head.sha;
+
+            // Create review with inline comments
+            try {
+              const reviewData = {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                pull_number: context.payload.pull_request.number,
-                body: reviewComment,
-                event: 'COMMENT' // Options: 'APPROVE', 'REQUEST_CHANGES', 'COMMENT'
-              });
-              console.log('Review posted successfully');
+                pull_number: pr.number,
+                commit_id: commitId,
+                body: reviewBody,
+                event: 'COMMENT'
+              };
+
+              // Add inline comments if present
+              if (inlineComments.length > 0) {
+                reviewData.comments = inlineComments.map(comment => ({
+                  path: comment.path,
+                  line: comment.line,
+                  side: comment.side || 'RIGHT',
+                  body: comment.body
+                }));
+              }
+
+              await github.rest.pulls.createReview(reviewData);
+              console.log(`Review posted successfully with ${inlineComments.length} inline comments`);
             } catch (error) {
               console.error('Error posting review:', error);
+              console.error('Error details:', JSON.stringify(error.response?.data || error.message));
               throw error;
             }

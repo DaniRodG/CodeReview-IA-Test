@@ -82,7 +82,22 @@ ${changedFiles.map(f => `- ${f}`).join('\n')}
 ${diff.substring(0, 50000)} ${diff.length > 50000 ? '\n... (diff truncado por longitud)' : ''}
 \`\`\`
 
-Por favor, proporciona una revisión exhaustiva que incluya:
+IMPORTANTE: Responde en el siguiente formato JSON seguido del análisis en Markdown:
+
+\`\`\`json
+{
+  "line_comments": [
+    {
+      "path": "nombre_archivo.js",
+      "line": número_de_línea,
+      "side": "RIGHT",
+      "body": "Comentario específico sobre esta línea"
+    }
+  ]
+}
+\`\`\`
+
+Luego proporciona una revisión exhaustiva en Markdown que incluya:
 
 1. **Resumen**: Una descripción breve de los cambios
 2. **Aspectos Positivos**: Lo que está bien hecho
@@ -90,25 +105,47 @@ Por favor, proporciona una revisión exhaustiva que incluya:
 4. **Sugerencias**: Recomendaciones para mejorar
 5. **Calidad del Código**: Evaluación del estilo, legibilidad y mantenibilidad
 
-Formatea tu respuesta en Markdown. Sé constructivo y específico en tu feedback.`;
+Para los comentarios JSON:
+- Identifica problemas específicos en líneas de código
+- Usa el número de línea exacto del archivo (no del diff)
+- Sé específico y constructivo en cada comentario`;
 
     console.log('Sending request to z.ai API...');
 
     // Call API
     const reviewText = await callAPI(prompt);
 
+    // Extract JSON comments if present
+    let lineComments = [];
+    let markdownReview = reviewText;
+
+    const jsonMatch = reviewText.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+    if (jsonMatch) {
+      try {
+        const jsonData = JSON.parse(jsonMatch[1]);
+        lineComments = jsonData.line_comments || [];
+        // Remove JSON block from markdown
+        markdownReview = reviewText.replace(/```json[\s\S]*?```\s*/, '');
+        console.log(`Found ${lineComments.length} line comments`);
+      } catch (error) {
+        console.warn('Failed to parse JSON comments:', error.message);
+      }
+    }
+
     // Format the final output
     const output = `## 🤖 Code Review (via z.ai)
 
-${reviewText}
+${markdownReview.trim()}
 
 ---
 *Review generado automáticamente a través de z.ai*`;
 
-    // Write output to file
+    // Write outputs to files
     fs.writeFileSync('review-output.md', output);
+    fs.writeFileSync('review-comments.json', JSON.stringify({ comments: lineComments }, null, 2));
 
     console.log('Code review completed successfully!');
+    console.log(`Generated ${lineComments.length} inline comments`);
     console.log('\n=== Review Output ===\n');
     console.log(output);
 
