@@ -86,6 +86,7 @@ IMPORTANTE: Responde en el siguiente formato JSON seguido del análisis en Markd
 
 \`\`\`json
 {
+  "action": "APPROVE | REQUEST_CHANGES | COMMENT",
   "line_comments": [
     {
       "path": "nombre_archivo.js",
@@ -96,6 +97,15 @@ IMPORTANTE: Responde en el siguiente formato JSON seguido del análisis en Markd
   ]
 }
 \`\`\`
+
+**Criterios para "action":**
+- **APPROVE**: El código está bien, sin problemas críticos. Puede tener mejoras menores pero es mergeable.
+- **REQUEST_CHANGES**: Hay problemas críticos como:
+  * Bugs que causarán errores en producción
+  * Vulnerabilidades de seguridad
+  * Lógica incorrecta que rompe funcionalidad
+  * Fugas de memoria o problemas de performance graves
+- **COMMENT**: Hay sugerencias de mejora pero nada crítico, el código funciona correctamente.
 
 Luego proporciona una revisión exhaustiva en Markdown que incluya:
 
@@ -115,8 +125,9 @@ Para los comentarios JSON:
     // Call API
     const reviewText = await callAPI(prompt);
 
-    // Extract JSON comments if present
+    // Extract JSON comments and action if present
     let lineComments = [];
+    let reviewAction = 'COMMENT'; // Default to COMMENT if not specified
     let markdownReview = reviewText;
 
     const jsonMatch = reviewText.match(/```json\s*(\{[\s\S]*?\})\s*```/);
@@ -124,8 +135,17 @@ Para los comentarios JSON:
       try {
         const jsonData = JSON.parse(jsonMatch[1]);
         lineComments = jsonData.line_comments || [];
+        reviewAction = jsonData.action || 'COMMENT';
+
+        // Validate action
+        if (!['APPROVE', 'REQUEST_CHANGES', 'COMMENT'].includes(reviewAction)) {
+          console.warn(`Invalid action "${reviewAction}", defaulting to COMMENT`);
+          reviewAction = 'COMMENT';
+        }
+
         // Remove JSON block from markdown
         markdownReview = reviewText.replace(/```json[\s\S]*?```\s*/, '');
+        console.log(`Review action: ${reviewAction}`);
         console.log(`Found ${lineComments.length} line comments`);
       } catch (error) {
         console.warn('Failed to parse JSON comments:', error.message);
@@ -142,9 +162,13 @@ ${markdownReview.trim()}
 
     // Write outputs to files
     fs.writeFileSync('review-output.md', output);
-    fs.writeFileSync('review-comments.json', JSON.stringify({ comments: lineComments }, null, 2));
+    fs.writeFileSync('review-comments.json', JSON.stringify({
+      action: reviewAction,
+      comments: lineComments
+    }, null, 2));
 
     console.log('Code review completed successfully!');
+    console.log(`Review action: ${reviewAction}`);
     console.log(`Generated ${lineComments.length} inline comments`);
     console.log('\n=== Review Output ===\n');
     console.log(output);

@@ -44,6 +44,7 @@ jobs:
 
             let reviewBody = '';
             let inlineComments = [];
+            let reviewAction = 'COMMENT'; // Default
 
             // Read review markdown
             try {
@@ -54,10 +55,19 @@ jobs:
               reviewBody = '⚠️ No se pudo completar la revisión de código. Por favor, revisa los logs del workflow.';
             }
 
-            // Read inline comments JSON
+            // Read inline comments and action from JSON
             try {
               const commentsData = JSON.parse(fs.readFileSync('review-comments.json', 'utf8'));
               inlineComments = commentsData.comments || [];
+              reviewAction = commentsData.action || 'COMMENT';
+
+              // Validate action
+              if (!['APPROVE', 'REQUEST_CHANGES', 'COMMENT'].includes(reviewAction)) {
+                console.warn(`Invalid action "${reviewAction}", defaulting to COMMENT`);
+                reviewAction = 'COMMENT';
+              }
+
+              console.log(`Review action: ${reviewAction}`);
               console.log(`Found ${inlineComments.length} inline comments`);
             } catch (error) {
               console.warn('No inline comments found or error reading:', error.message);
@@ -75,7 +85,7 @@ jobs:
                 pull_number: pr.number,
                 commit_id: commitId,
                 body: reviewBody,
-                event: 'COMMENT'
+                event: reviewAction // La IA decide: APPROVE, REQUEST_CHANGES o COMMENT
               };
 
               // Add inline comments if present
@@ -89,7 +99,18 @@ jobs:
               }
 
               await github.rest.pulls.createReview(reviewData);
-              console.log(`Review posted successfully with ${inlineComments.length} inline comments`);
+              console.log(`✅ Review posted successfully!`);
+              console.log(`   Action: ${reviewAction}`);
+              console.log(`   Inline comments: ${inlineComments.length}`);
+
+              // Show what happened
+              if (reviewAction === 'APPROVE') {
+                console.log('   ✅ PR aprobado automáticamente - El código está bien');
+              } else if (reviewAction === 'REQUEST_CHANGES') {
+                console.log('   ⚠️ Cambios solicitados - Se bloqueó el merge');
+              } else {
+                console.log('   💬 Comentarios agregados - El merge no está bloqueado');
+              }
             } catch (error) {
               console.error('Error posting review:', error);
               console.error('Error details:', JSON.stringify(error.response?.data || error.message));
