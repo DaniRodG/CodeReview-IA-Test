@@ -2,40 +2,39 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-// Configuration
+// Configuration - Using z.ai Anthropic-compatible endpoint with GLM_API_KEY
 const GLM_API_KEY = process.env.GLM_API_KEY;
-const GLM_API_URL = process.env.GLM_API_URL || 'https://api.z.ai/api/paas/v4/chat/completions';
+const ANTHROPIC_BASE_URL = process.env.ANTHROPIC_BASE_URL || 'https://api.z.ai/api/anthropic';
 const BASE_BRANCH = process.env.BASE_BRANCH || 'main';
 const MAX_FILE_SIZE = 100000; // Maximum file size in bytes to include in review
 
-async function callGLMAPI(prompt) {
-  const response = await fetch(GLM_API_URL, {
+async function callAPI(prompt) {
+  const response = await fetch(`${ANTHROPIC_BASE_URL}/v1/messages`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${GLM_API_KEY}`,
+      'x-api-key': GLM_API_KEY,
+      'anthropic-version': '2023-06-01',
     },
     body: JSON.stringify({
-      model: 'glm-4.6',
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 4096,
       messages: [
         {
           role: 'user',
           content: prompt,
         },
       ],
-      temperature: 0.7,
-      max_tokens: 4000,
-      stream: false,
     }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`GLM API request failed: ${response.status} ${response.statusText}\n${errorText}`);
+    throw new Error(`API request failed: ${response.status} ${response.statusText}\n${errorText}`);
   }
 
   const data = await response.json();
-  return data.choices[0].message.content;
+  return data.content[0].text;
 }
 
 async function main() {
@@ -44,7 +43,7 @@ async function main() {
       throw new Error('GLM_API_KEY is not set');
     }
 
-    console.log('Starting GLM 4.6 code review...');
+    console.log('Starting code review via z.ai...');
 
     // Get the diff
     console.log('Getting PR diff...');
@@ -55,7 +54,7 @@ async function main() {
 
     if (!diff || diff.trim().length === 0) {
       console.log('No changes detected in this PR');
-      const noChangesMessage = `## 🤖 GLM Code Review
+      const noChangesMessage = `## 🤖 Code Review (via z.ai)
 
 No se detectaron cambios en este pull request.`;
       fs.writeFileSync('review-output.md', noChangesMessage);
@@ -72,7 +71,7 @@ No se detectaron cambios en este pull request.`;
 
     console.log(`Found ${changedFiles.length} changed files`);
 
-    // Prepare the prompt for GLM
+    // Prepare the prompt
     const prompt = `Eres un revisor de código experto. Por favor, revisa los siguientes cambios del pull request y proporciona feedback constructivo en español.
 
 ## Archivos Modificados
@@ -93,18 +92,18 @@ Por favor, proporciona una revisión exhaustiva que incluya:
 
 Formatea tu respuesta en Markdown. Sé constructivo y específico en tu feedback.`;
 
-    console.log('Sending request to GLM API...');
+    console.log('Sending request to z.ai API...');
 
-    // Call GLM API
-    const reviewText = await callGLMAPI(prompt);
+    // Call API
+    const reviewText = await callAPI(prompt);
 
     // Format the final output
-    const output = `## 🤖 GLM 4.6 Code Review
+    const output = `## 🤖 Code Review (via z.ai)
 
 ${reviewText}
 
 ---
-*Review generado automáticamente por GLM 4.6*`;
+*Review generado automáticamente a través de z.ai*`;
 
     // Write output to file
     fs.writeFileSync('review-output.md', output);

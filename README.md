@@ -1,6 +1,6 @@
-# Code Review Automático con GLM 4.6
+# Code Review Automático con Claude (via z.ai)
 
-Este repositorio contiene una configuración de GitHub Actions para realizar revisiones de código automáticas usando el modelo GLM 4.6 de Zhipu AI.
+Este repositorio contiene una configuración de GitHub Actions para realizar revisiones de código automáticas usando Claude a través de z.ai.
 
 ## Características
 
@@ -11,19 +11,20 @@ Este repositorio contiene una configuración de GitHub Actions para realizar rev
 
 ## Requisitos Previos
 
-1. **API Key de GLM**: Necesitas una clave API de Zhipu AI (GLM 4.6)
-   - Obtén tu API key en: https://z.ai/
+1. **Suscripción a z.ai**: Necesitas una suscripción activa a z.ai con acceso a Claude
+   - Regístrate en: https://z.ai/
+   - Obtén tu API token en: https://z.ai/manage-apikey/apikey-list
 2. **Permisos en GitHub**: Debes tener permisos de administrador en el repositorio
 
 ## Configuración
 
-### 1. Agregar la API Key como Secret
+### 1. Agregar el API Token como Secret
 
 1. Ve a tu repositorio en GitHub
 2. Navega a `Settings` → `Secrets and variables` → `Actions`
 3. Haz clic en `New repository secret`
-4. Nombre: `GLM_API_KEY`
-5. Valor: Tu API key de GLM 4.6
+4. Nombre: `ANTHROPIC_AUTH_TOKEN`
+5. Valor: Tu API token de z.ai (obtenido de https://z.ai/manage-apikey/apikey-list)
 6. Haz clic en `Add secret`
 
 ### 2. Verificar el Workflow
@@ -49,7 +50,7 @@ Una vez configurado, el sistema funciona automáticamente:
 
 1. **Crea un Pull Request** en tu repositorio
 2. **GitHub Actions se activa** automáticamente
-3. **GLM 4.6 analiza** los cambios del código
+3. **Claude analiza** los cambios del código a través de z.ai
 4. **Recibe el review** como comentario en el PR
 
 ### Ejemplo de Review
@@ -57,7 +58,7 @@ Una vez configurado, el sistema funciona automáticamente:
 El bot publicará un comentario similar a:
 
 ```markdown
-## 🤖 GLM 4.6 Code Review
+## 🤖 Claude Code Review (via z.ai)
 
 ### Resumen
 Este PR implementa una nueva funcionalidad de autenticación...
@@ -75,7 +76,7 @@ Este PR implementa una nueva funcionalidad de autenticación...
 - Considerar usar async/await para...
 
 ---
-*Review generado automáticamente por GLM 4.6*
+*Review generado automáticamente por Claude a través de z.ai*
 ```
 
 ## Estructura del Proyecto
@@ -97,7 +98,7 @@ Este PR implementa una nueva funcionalidad de autenticación...
 1. **Trigger**: El workflow se activa cuando hay cambios en un PR
 2. **Checkout**: Descarga el código del repositorio
 3. **Análisis**: Obtiene el diff de los cambios
-4. **API Call**: Envía el código a GLM 4.6 con el prompt de revisión
+4. **API Call**: Envía el código a Claude a través de z.ai con el prompt de revisión
 5. **Resultado**: Publica el review como comentario en el PR
 
 ## Personalización Avanzada
@@ -106,9 +107,9 @@ Este PR implementa una nueva funcionalidad de autenticación...
 
 Edita el archivo `.github/scripts/glm-code-review.js` para:
 
-- Cambiar el prompt enviado a GLM
-- Ajustar la cantidad de tokens
-- Modificar la temperatura del modelo
+- Cambiar el prompt enviado a Claude
+- Ajustar la cantidad de tokens (max_tokens)
+- Modificar el modelo de Claude usado
 - Cambiar el formato de salida
 
 ### Configurar Eventos
@@ -139,10 +140,11 @@ El workflow requiere los siguientes permisos:
 - Confirma que GitHub Actions esté habilitado en tu repositorio
 - Revisa la pestaña "Actions" para ver errores
 
-### Error de API Key
+### Error de API Token
 
-- Verifica que el secret `GLM_API_KEY` esté configurado correctamente
-- Asegúrate de que la API key sea válida y tenga créditos
+- Verifica que el secret `ANTHROPIC_AUTH_TOKEN` esté configurado correctamente
+- Asegúrate de que tu suscripción a z.ai esté activa
+- Confirma que el token tenga los permisos necesarios
 
 ### El review no aparece en el PR
 
@@ -152,9 +154,9 @@ El workflow requiere los siguientes permisos:
 
 ## Costos
 
-- **GitHub Actions**: Consumo de minutos de CI/CD (gratis para repos públicos)
-- **GLM API**: Cobro por tokens según el plan de Zhipu AI
-- **Costo estimado por review**: Varía según el tamaño del PR (generalmente centavos por review)
+- **GitHub Actions**: Consumo de minutos de CI/CD (gratis para repos públicos, límites según plan para privados)
+- **z.ai Subscription**: Requiere suscripción activa a z.ai con acceso a Claude
+- **Costo estimado por review**: Depende de tu plan de suscripción de z.ai
 
 ## Limitaciones
 
@@ -178,8 +180,8 @@ MIT
 
 Para problemas con:
 - **GitHub Actions**: Consulta la [documentación de GitHub](https://docs.github.com/actions)
-- **API de GLM**: Visita la [documentación de Zhipu AI](https://docs.z.ai/)
+- **z.ai y Claude**: Visita la [documentación de z.ai](https://docs.z.ai/)
 
 ---
 
-**Nota**: Este proyecto utiliza GLM 4.6 de Zhipu AI. Asegúrate de cumplir con los términos de servicio de la API.
+**Nota**: Este proyecto utiliza Claude a través de z.ai. Asegúrate de tener una suscripción activa y cumplir con los términos de servicio.
