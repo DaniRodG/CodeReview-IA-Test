@@ -1,0 +1,11 @@
+{
+  "name": "glm-code-review",
+  "version": "1.0.0",
+  "description": "Automated code review using GLM 4.6 API",
+  "main": "glm-code-review.js",
+  "scripts": {
+    "review": "node glm-code-review.js"
+  },
+  "author": "",
+  "license": "MIT"
+}
